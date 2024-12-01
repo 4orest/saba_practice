@@ -26,7 +26,13 @@ impl Url {
         if !self.is_http() {
             return Err("Only HTTP scheme is supported.".to_string());
         }
-        // 次のセクションで実装
+
+        self.host = self.extract_host();
+        self.port = self.extract_port();
+        self.path = self.extract_path();
+        self.searchpart = self.extract_searchpart();
+
+        Ok(self.clone())
     }
 
     fn is_http(&mut self) -> bool {
