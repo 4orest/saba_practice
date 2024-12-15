@@ -65,4 +65,45 @@ impl HttpResponse {
             body: body.to_string(),
         })
     }
+
+    pub fn version(&self) -> String {
+        self.version.clone()
+    }
+
+    pub fn status_code(&self) -> u32 {
+        self.status_code
+    }
+
+    pub fn reason(&self) -> String {
+        self.reason.clone()
+    }
+
+    pub fn headers(&self) -> Vec<Header> {
+        self.headers.clone()
+    }
+
+    pub fn body(&self) -> String {
+        self.body.clone()
+    }
+
+    pub fn header_value(&self, name: &str) -> Result<String, String> {
+        for h in &self.headers {
+            if h.name == name {
+                return Ok(h.value.clone());
+            }
+        }
+
+        Err(format!("failed to find {} in headers", name))
+    }
 }
+
+// #[cfg(test)]
+// mod tests {
+//     use super::*;
+//     #[test]
+//     fn test_status_line_only() {
+//         let raw = "HTTP/1.1 200 OK\n\n".to_string();
+//         let res = HttpResponse::new(raw).expect("failed to parse http response");
+//         assert_eq!(res.version(), "HTTP/1.1");
+//     }
+// }
