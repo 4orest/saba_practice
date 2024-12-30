@@ -121,7 +121,7 @@ impl Iterator for HtmlTokenizer {
         loop {
             let c = match self.reconsume {
                 true => self.reconsume_input(),
-                false => self.comsume_next_input(),
+                false => self.consume_next_input(),
             };
 
             match self.state {
@@ -156,6 +156,18 @@ impl Iterator for HtmlTokenizer {
 
                     self.reconsume = true;
                     self.state = State::Data;
+                }
+                State::EndTagOpen => {
+                    if self.is_eof() {
+                        return Some(HtmlToken::Eof);
+                    }
+
+                    if c.is_ascii_alphabetic() {
+                        self.reconsume = true;
+                        self.state = State::TagName;
+                        self.create_tag(false);
+                        continue;
+                    }
                 }
                 _ => {}
             }
