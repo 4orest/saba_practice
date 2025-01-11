@@ -451,6 +451,21 @@ impl Iterator for HtmlTokenizer {
                     self.state = State::ScriptData;
                     return Some(HtmlToken::Char('<'));
                 }
+                State::ScriptDataEndTagOpen => {
+                    if c.is_ascii_alphabetic() {
+                        self.reconsume = true;
+                        self.state = State::ScriptDataEndTagName;
+                        self.create_tag(false);
+                        continue;
+                    }
+
+                    self.reconsume = true;
+                    self.state = State::ScriptData;
+                    // 仕様では、"<"と"/"の2つの文字トークンを返すとなっているが、
+                    // 私達の実装では、nextメソッドからは一つのトークンしか返せないため、
+                    // "<"のトークンのみを返す
+                    return Some(HtmlToken::Char('<'));
+                }
                 _ => {}
             }
         }
