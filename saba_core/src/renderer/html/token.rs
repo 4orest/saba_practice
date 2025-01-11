@@ -185,7 +185,7 @@ pub enum State {
     /// https://html.spec.whatwg.org/multipage/parsing.html#script-data-end-tag-name-state
     ScriptDataEndTagName,
     /// https://html.spec.whatwg.org/multipage/parsing.html#temporary-buffer
-    Temporaryuffer,
+    TemporaryBuffer,
 }
 
 impl Iterator for HtmlTokenizer {
@@ -483,8 +483,37 @@ impl Iterator for HtmlTokenizer {
                     self.buf.push(c);
                     continue;
                 }
-                _ => {}
+                State::TemporaryBuffer => {
+                    self.reconsume = true;
+
+                    if self.buf.chars().count() == 0 {
+                        self.state = State::ScriptData;
+                        continue;
+                    }
+
+                    // 最初の1文字を削除する
+                    let c = self
+                        .buf
+                        .chars()
+                        .nth(0)
+                        .expect("self.buf should have at at least 1 char");
+                    self.buf.remove(0);
+                    return Some(HtmlToken::Char(c));
+                }
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::alloc::string::ToString;
+
+    #[test]
+    fn test_empty() {
+        let html = "".to_string();
+        let mut tokenizer = HtmlTokenizer::new(html);
+        assert!(tokenizer.next().is_none());
     }
 }
