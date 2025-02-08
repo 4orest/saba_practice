@@ -66,6 +66,10 @@ impl Node {
     pub fn next_sibling(&self) -> Option<Rc<RefCell<Node>>> {
         self.next_sibling.as_ref().cloned()
     }
+
+    pub fn set_window(&mut self, window: Weak<RefCell<Window>>) {
+        self.window = window;
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -76,4 +80,29 @@ pub enum NodeKind {
     Element(Element),
     /// https://dom.spec.whatwg.org/#interface-text
     Text(String),
+}
+
+/// https://html.spec.whatwg.org/multipage/nav-history-apis.html#window
+#[derive(Debug, Clone)]
+pub struct Window {
+    document: Rc<RefCell<Node>>,
+}
+
+impl Window {
+    pub fn new() -> Self {
+        let window = Self {
+            document: Rc::new(RefCell::new(Node::new(NodeKind::Document))),
+        };
+
+        window
+            .document
+            .borrow_mut()
+            .set_window(Rc::downgrade(&Rc::new(RefCell::new(window.clone()))));
+
+        window
+    }
+
+    pub fn document(&self) -> Rc<RefCell<Node>> {
+        self.document.clone()
+    }
 }
