@@ -1,7 +1,11 @@
+use crate::renderer::html::attribute::Attribute;
+use alloc::format;
 use alloc::rc::Rc;
 use alloc::rc::Weak;
 use alloc::string::String;
+use alloc::vec::Vec;
 use core::cell::RefCell;
+use core::str::FromStr;
 
 #[derive(Debug, Clone)]
 pub struct Node {
@@ -70,6 +74,24 @@ impl Node {
     pub fn set_window(&mut self, window: Weak<RefCell<Window>>) {
         self.window = window;
     }
+
+    pub fn kind(&self) -> NodeKind {
+        self.kind.clone()
+    }
+
+    pub fn get_element(&self) -> Option<Element> {
+        match self.kind {
+            NodeKind::Document | NodeKind::Text(_) => None,
+            NodeKind::Element(ref e) => Some(e.clone()),
+        }
+    }
+
+    pub fn element_kind(&self) -> Option<ElementKind> {
+        match self.kind {
+            NodeKind::Document | NodeKind::Text(_) => None,
+            NodeKind::Element(ref e) => Some(e.kind()),
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -104,5 +126,56 @@ impl Window {
 
     pub fn document(&self) -> Rc<RefCell<Node>> {
         self.document.clone()
+    }
+}
+
+/// https://dom.spec.whatwg.org/#interface-element
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Element {
+    kind: ElementKind,
+    attributes: Vec<Attribute>,
+}
+
+impl Element {
+    pub fn new(element_name: &str, attributes: Vec<Attribute>) -> Self {
+        Self {
+            kind: ElementKind::from_str(element_name)
+                .expect("failed to convert string to ElementKind"),
+            attributes,
+        }
+    }
+
+    pub fn kind(&self) -> ElementKind {
+        self.kind
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+/// https://dom.spec.whatwg.org/#interface-element
+pub enum ElementKind {
+    /// https://html.spec.whatwg.org/multipage/semantics.html#the-html-element
+    Html,
+    /// https://html.spec.whatwg.org/multipage/semantics.html#the-head-element
+    Head,
+    /// https://html.spec.whatwg.org/multipage/semantics.html#the-style-element
+    Style,
+    /// https://html.spec.whatwg.org/multipage/semantics.html#the-script-element
+    Script,
+    /// https://html.spec.whatwg.org/multipage/semantics.html#the-body-element
+    Body,
+}
+
+impl FromStr for ElementKind {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "html" => Ok(ElementKind::Html),
+            "head" => Ok(ElementKind::Head),
+            "style" => Ok(ElementKind::Style),
+            "script" => Ok(ElementKind::Script),
+            "body" => Ok(ElementKind::Body),
+            _ => Err(format!("unimplemented element name {:?}", s)),
+        }
     }
 }
