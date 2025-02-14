@@ -5,6 +5,8 @@ use alloc::rc::Rc;
 use alloc::vec::Vec;
 use core::cell::RefCell;
 
+use super::token::HtmlToken;
+
 #[derive(Debug, Clone)]
 pub struct HtmlParser {
     window: Rc<RefCell<Window>>,
@@ -32,17 +34,23 @@ impl HtmlParser {
 
         while token.is_some() {
             match self.mode {
-                InsertionMode::Initial => {}
-                InsertionMode::BeforeHtml => {}
-                InsertionMode::BeforeHead => {}
-                InsertionMode::InHead => {}
-                InsertionMode::AfterHead => {}
-                InsertionMode::InBody => {}
-                InsertionMode::Text => {}
-                InsertionMode::AfterBody => {}
-                InsertionMode::AfterAfterBody => {}
+                InsertionMode::Initial => {
+                    // 本書では、DOCTYPEトークンをサポートしていないため、
+                    // <!doctype html>のようなトークンは文字トークンとして
+                    // 表される。
+                    // 文字トークンは無視する
+                    if let Some(HtmlToken::Char(_)) = token {
+                        token = self.t.next();
+                        continue;
+                    }
+
+                    self.mode = InsertionMode::BeforeHtml;
+                    continue;
+                }
             }
         }
+
+        self.window.clone()
     }
 }
 
