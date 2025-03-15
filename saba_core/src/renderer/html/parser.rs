@@ -10,6 +10,10 @@ use core::str::FromStr;
 use super::attribute;
 use super::token::HtmlToken;
 
+use crate::renderer::dom::node::Element;
+use crate::renderer::dom::node::NodeKind;
+use crate::renderer::html::attribute::Attribute;
+
 #[derive(Debug, Clone)]
 pub struct HtmlParser {
     window: Rc<RefCell<Window>>,
@@ -205,7 +209,7 @@ impl HtmlParser {
                                     continue;
                                 }
                                 "html" => {
-                                    if self.pop_current_mode(ElementKind::Body) {
+                                    if self.pop_current_node(ElementKind::Body) {
                                         self.mode = InsertionMode::AfterBody;
                                         assert!(self.pop_current_node(ElementKind::Html));
                                     } else {
@@ -294,6 +298,60 @@ impl HtmlParser {
 
         self.window.clone()
     }
+
+    fn create_element(&self, tag: &str, attributes: Vec<Attribute>) -> Node {
+        Node::new(NodeKind::Element(Element::new(tag, attributes)))
+    }
+
+    fn insert_element(&mut self, tag: &str, attributes: Vec<Attribute>) {
+        let window = self.window.borrow();
+        let current = match self.stack_of_open_elements.last() {
+            Some(n) => n.clone(),
+            None => window.document(),
+        };
+        let node = Rc::new(RefCell::new(self.create_element(tag, attributes)));
+
+        if current.borrow().first_child().is_some() {
+            let mut last_sibling = current.borrow().first_child();
+            loop {
+                last_sibling = match last_sibling {
+                    Some(ref node) => {
+                        if node.borrow().next_sibling().is_some() {
+                            node.borrow().next_sibling()
+                        } else {
+                            break;
+                        }
+                    }
+                }
+            }
+
+            last_sibling
+                .unwrap()
+                .borrow_mut()
+                .set_next_sibling(Some(Rc::clone(&node)));
+            node.borrow_mut().set_previous_sibling(Rc::downgrade(
+                &current
+                    .borrow()
+                    .first_child()
+                    .expect("failed to get a first child"),
+            ))
+        } else {
+            current.borrow_mut().set_first_child(Some(Rc::clone(&node)));
+        }
+
+        current.borrow_mut().set_last_child(Rc::downgrade(&node));
+        node.borrow_mut().set_parent(Rc::downgrade(&current));
+
+        self.stack_of_open_elements.push(node);
+    }
+
+    // fn pop_current_node(&mut self, element_kind: ElementKind) -> bool {
+    //     false
+    // }
+
+    // fn pop_until(&mut self, element_kind: ElementKind) {}
+
+    // fn insert_char(&mut self, c: char) {}
 }
 
 /// https://html.spec.whatwg.org/multipage/parsing.html#the-insertion-mode
