@@ -1,8 +1,11 @@
 use crate::alloc::string::ToString;
+use crate::renderer::css::token::CssToken;
 use crate::renderer::css::token::CssTokenizer;
 use alloc::string::String;
 use alloc::vec::Vec;
 use core::iter::Peekable;
+
+pub type ComponentValue = CssToken;
 
 #[derive(Debug, Clone)]
 pub struct CssParser {
