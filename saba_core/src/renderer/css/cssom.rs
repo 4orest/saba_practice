@@ -67,3 +67,26 @@ pub enum Selector {
     /// パース中にエラーが起こったときに使用されるセレクタ
     UnknownSelector,
 }
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct Declaration {
+    pub property: String,
+    pub value: ComponentValue,
+}
+
+impl Declaration {
+    pub fn new() -> Self {
+        Self {
+            property: String::new(),
+            value: ComponentValue::Ident(String::new()),
+        }
+    }
+
+    pub fn set_property(&mut self, property: String) {
+        self.property = property;
+    }
+
+    pub fn set_value(&mut self, value: ComponentValue) {
+        self.value = value;
+    }
+}
