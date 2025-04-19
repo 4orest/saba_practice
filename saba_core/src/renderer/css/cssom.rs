@@ -1,3 +1,4 @@
+use crate::alloc::string::ToString;
 use crate::renderer::css::token::CssTokenizer;
 use alloc::vec::Vec;
 use core::iter::Peekable;
@@ -26,5 +27,30 @@ impl StyleSheet {
 
     pub fn set_rules(&mut self, rules: Vec<QualifiedRule>) {
         self.rules = rules;
+    }
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct QualifiedRule {
+    /// https://www.w3.org/TR/selectors-4/#typedef-selector-list
+    pub selector: Selector,
+    /// https://www.w3.org/TR/css-syntax-3/#parse-a-list-of-declarations
+    pub declarations: Vec<Declaration>,
+}
+
+impl QualifiedRule {
+    pub fn new() -> Self {
+        Self {
+            selector: Selector::TypeSelector("".to_string()),
+            declarations: Vec::new(),
+        }
+    }
+
+    pub fn set_selector(&mut self, selector: Selector) {
+        self.selector = selector;
+    }
+
+    pub fn set_declarations(&mut self, declarations: Vec<Declaration>) {
+        self.declarations = declarations;
     }
 }
