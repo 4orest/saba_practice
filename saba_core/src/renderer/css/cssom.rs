@@ -1,5 +1,6 @@
 use crate::alloc::string::ToString;
 use crate::renderer::css::token::CssTokenizer;
+use alloc::string::String;
 use alloc::vec::Vec;
 use core::iter::Peekable;
 
@@ -53,4 +54,16 @@ impl QualifiedRule {
     pub fn set_declarations(&mut self, declarations: Vec<Declaration>) {
         self.declarations = declarations;
     }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum Selector {
+    /// https://www.w3.org/TR/selectors-4/#type-selectors
+    TypeSelector(String),
+    /// https://www.w3.org/TR/selectors-4/#class-html
+    ClassSelector(String),
+    /// https://www.w3.org/TR/selectors-4/#id-selectors
+    IdSelector(String),
+    /// パース中にエラーが起こったときに使用されるセレクタ
+    UnknownSelector,
 }
