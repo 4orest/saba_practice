@@ -56,6 +56,68 @@ impl CssParser {
             }
         }
     }
+
+    fn consume_qualified_rule(&mut self) -> Option<QualifiedRule> {
+        let mut rule = QualifiedRule::new();
+
+        loop {
+            let token = match self.t.peek() {
+                Some(t) => t,
+                None => return None,
+            };
+
+            match token {
+                CssToken::OpenCurly => {
+                    assert_eq!(self.t.next(), Some(CssToken::OpenCurly));
+                    rule.set_declarations(self.consume_list_of_declarations());
+                    return Some(rule);
+                }
+                _ => {
+                    rule.set_selector(self.consume_selector());
+                }
+            }
+        }
+    }
+
+    fn consume_selector(&mut self) -> Selector {
+        let token = match self.t.next() {
+            Some(t) => t,
+            None => panic!("should have a token but got None"),
+        };
+
+        match token {
+            CssToken::HashToken(value) => Selector::IdSelector(value[1..].to_string()),
+            CssToken::Delim(delim) => {
+                if delim == '.' {
+                    return Selector::ClassSelector(self.consume_ident());
+                }
+                panic!("Parse error: {:?} is an unexpected token.", token);
+            }
+            CssToken::Ident(ident) => {
+                // a:hoverのようなセレクタはタイプセレクタとして扱うため、もし
+                // コロン (:) が出てきた場合は宣言ブロックの開始直前までトークン
+                // を進める
+                if self.t.peek() == Some(&CssToken::Colon) {
+                    while self.t.peek() != Some(&CssToken::OpenCurly) {
+                        self.t.next();
+                    }
+                }
+                Selector::TypeSelector(ident.to_string())
+            }
+            CssToken::AtKeyword(_keyword) => {
+                // @から始まるルールを無視するために、宣言ブロックの開始直前まで
+                // トークンを進める
+                while self.t.peek() != Some(&CssToken::OpenCurly) {
+                    self.t.next();
+                }
+                Selector::UnknownSelector
+            }
+            _ => {
+                self.t.next();
+                Selector::UnknownSelector
+            }
+        }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq)]
