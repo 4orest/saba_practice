@@ -16,6 +16,16 @@ impl CssParser {
     pub fn new(t: CssTokenizer) -> Self {
         Self { t: t.peekable() }
     }
+
+    pub fn parse_stylesheet(&mut self) -> StyleSheet {
+        // StyleSheet構造体のインスタンスを作成する
+        let mut sheet = StyleSheet::new();
+
+        // トークン列からルールのリストを作成し、StyleSheetのフィールドに
+        // 設定する
+        sheet.set_rules(self.consume_list_of_rules());
+        sheet
+    }
 }
 
 #[derive(Debug, Clone, PartialEq)]
