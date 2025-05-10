@@ -168,7 +168,7 @@ impl CssParser {
         }
 
         // Declaration構造体の値にコンポーネント値を設定する
-        declaration.set_value(self.consume_conponent_value());
+        declaration.set_value(self.consume_component_value());
         Some(declaration)
     }
 
@@ -266,5 +266,19 @@ impl Declaration {
 
     pub fn set_value(&mut self, value: ComponentValue) {
         self.value = value;
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_empty() {
+        let style = "".to_string();
+        let t = CssTokenizer::new(style);
+        let cssom = CssParser::new(t).parse_stylesheet();
+
+        assert_eq!(cssom.rules.len(), 0);
     }
 }
