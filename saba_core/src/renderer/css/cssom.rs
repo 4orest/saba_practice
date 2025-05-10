@@ -171,6 +171,26 @@ impl CssParser {
         declaration.set_value(self.consume_conponent_value());
         Some(declaration)
     }
+
+    fn consume_ident(&mut self) -> String {
+        let token = match self.t.next() {
+            Some(t) => t,
+            None => panic!("should have a token but got None"),
+        };
+
+        match token {
+            CssToken::Ident(ref ident) => ident.to_string(),
+            _ => {
+                panic!("Parse error: {:?} is an unexpected token.", token);
+            }
+        }
+    }
+
+    fn consume_component_value(&mut self) -> ComponentValue {
+        self.t
+            .next()
+            .expect("should have a token in consume_component_value")
+    }
 }
 
 #[derive(Debug, Clone, PartialEq)]
