@@ -242,3 +242,21 @@ impl DisplayType {
         }
     }
 }
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum TextDecoration {
+    None,
+    Underline,
+}
+
+impl TextDecoration {
+    fn default(node: &Rc<RefCell<Node>>) -> Self {
+        match &node.borrow().kind() {
+            NodeKind::Element(element) => match element.kind() {
+                ElementKind::A => TextDecoration::Underline,
+                _ => TextDecoration::None,
+            },
+            _ => TextDecoration::None,
+        }
+    }
+}
