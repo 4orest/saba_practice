@@ -1,7 +1,11 @@
+use core::cell::RefCell;
+
 use alloc::format;
+use alloc::rc::Rc;
 use alloc::string::{String, ToString};
 
 use crate::error::Error;
+use crate::renderer::dom::node::{ElementKind, Node, NodeKind};
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct ComputedStyle {
@@ -181,5 +185,25 @@ impl Color {
 
     pub fn code_u32(&self) -> u32 {
         u32::from_str_radix(self.code.trim_start_matches('#'), 16).unwrap()
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum FontSize {
+    Medium,
+    XLarge,
+    XXLarge,
+}
+
+impl FontSize {
+    fn default(node: &Rc<RefCell<Node>>) -> Self {
+        match &node.borrow().kind() {
+            NodeKind::Element(element) => match element.kind() {
+                ElementKind::H1 => FontSize::XXLarge,
+                ElementKind::H2 => FontSize::XLarge,
+                _ => FontSize::Medium,
+            },
+            _ => FontSize::Medium,
+        }
     }
 }
