@@ -1,8 +1,11 @@
 use alloc::rc::{Rc, Weak};
 use core::cell::RefCell;
 
+use crate::renderer::css::cssom::{self, StyleSheet};
 use crate::renderer::dom::node::{Node, NodeKind};
 use crate::renderer::layout::computed_style::ComputedStyle;
+use crate::renderer::layout::computed_style::DisplayType;
+use crate::renderer::layout::layout_object;
 
 #[derive(Debug, Clone)]
 pub struct LayoutObject {
@@ -137,4 +140,42 @@ impl LayoutSize {
     pub fn set_height(&mut self, height: i64) {
         self.height = height
     }
+}
+
+pub fn create_layout_object(
+    node: &Option<Rc<RefCell<Node>>>,
+    parent_obj: &Option<Rc<RefCell<LayoutObject>>>,
+    cssom: &StyleSheet,
+) -> Option<Rc<RefCell<LayoutObject>>> {
+    if let Some(n) = node {
+        // LayoutObjectを作成する
+        let layout_object = Rc::new(RefCell::new(LayoutObject::new(n.clone(), parent_obj)));
+
+        // CSSのルールをセレクタで選択されたノードに適用する
+        for rule in &cssom.rules {
+            if layout_object.borrow().is_node_selected(&rule.selector) {
+                layout_object
+                    .borrow_mut()
+                    .cascading_style(rule.declarations.clone());
+            }
+        }
+
+        // CSSでスタイルが指定されていない場合、デフォルトの値または親のノードから継承した値を使用する
+        let parent_style = if let Some(parent) = parent_obj {
+            Some(parent.borrow().style())
+        } else {
+            None
+        };
+        layout_object.borrow_mut().defaulting_style(n, parent_style);
+
+        // displayプロパティがnoneの場合、ノードを作成しない
+        if layout_object.borrow().style().display() == DisplayType::DisplayNone {
+            return None;
+        }
+
+        // displayプロパティの最終的な値を使用してノードの種類を決定する
+        layout_object.borrow_mut().update_kind();
+        return Some(layout_object);
+    }
+    None
 }
