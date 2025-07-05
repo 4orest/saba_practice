@@ -46,6 +46,27 @@ impl LayoutView {
             None,
         )
     }
+
+    fn calculate_node_size(node: &Option<Rc<RefCell<LayoutObject>>>, parent_size: LayoutSize) {
+        if let Some(n) = node {
+            // ノードがブロック要素の場合、子ノードのレイアウトを計算する前に
+            // 横幅を決める
+            if n.borrow().kind() == LayoutObjectKind::Block {
+                n.borrow_mut().compute_size(&first_child, n.borrow().size());
+            }
+
+            let first_child = n.borrow().first_child();
+            Self::calculate_node_size(&first_child, n.borrow().size());
+
+            let next_sibling = n.borrow().next_sibling();
+            Self::calculate_node_size(&next_sibling, parent_size);
+
+            // 子ノードのサイズが決まったあとにサイズを計算する
+            // ブロック要素のとき、高さは子ノードの高さに依存する
+            // インライン要素のとき、高さも横幅も子ノードに依存する
+            n.borrow_mut().compute_size(parent_size);
+        }
+    }
 }
 
 fn build_layout_tree(
