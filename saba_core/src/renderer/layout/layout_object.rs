@@ -15,7 +15,6 @@ use crate::renderer::layout::computed_style::Color;
 use crate::renderer::layout::computed_style::ComputedStyle;
 use crate::renderer::layout::computed_style::DisplayType;
 use crate::renderer::layout::computed_style::FontSize;
-use crate::renderer::layout::layout_object;
 
 #[derive(Debug, Clone)]
 pub struct LayoutObject {

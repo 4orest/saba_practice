@@ -192,3 +192,26 @@ fn build_layout_tree(
 
     layout_object
 }
+
+#[cfg(test)]
+mod tests {
+    use alloc::string::String;
+
+    use super::*;
+    use crate::alloc::string::ToString;
+    use crate::renderer::css::cssom::CssParser;
+    use crate::renderer::css::token::CssTokenizer;
+    use crate::renderer::dom::api::get_style_content;
+    use crate::renderer::html::parser::HtmlParser;
+    use crate::renderer::html::token::HtmlTokenizer;
+
+    fn create_layout_view(html: String) -> LayoutView {
+        let t = HtmlTokenizer::new(html);
+        let window = HtmlParser::new(t).construct_tree();
+        let dom = window.borrow().document();
+        let style = get_style_content(dom.clone());
+        let css_tokenizer = CssTokenizer::new(style);
+        let cssom = CssParser::new(css_tokenizer).parse_stylesheet();
+        LayoutView::new(dom, &cssom)
+    }
+}
