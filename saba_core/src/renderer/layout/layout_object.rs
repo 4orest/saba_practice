@@ -316,6 +316,12 @@ impl LayoutObject {
     }
 }
 
+impl PartialEq for LayoutObject {
+    fn eq(&self, other: &Self) -> bool {
+        self.kind == other.kind
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum LayoutObjectKind {
     Block,
