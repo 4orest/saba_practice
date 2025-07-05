@@ -52,7 +52,7 @@ impl LayoutView {
             // ノードがブロック要素の場合、子ノードのレイアウトを計算する前に
             // 横幅を決める
             if n.borrow().kind() == LayoutObjectKind::Block {
-                n.borrow_mut().compute_size(&first_child, n.borrow().size());
+                n.borrow_mut().compute_size(parent_size);
             }
 
             let first_child = n.borrow().first_child();
