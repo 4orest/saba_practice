@@ -276,6 +276,44 @@ impl LayoutObject {
 
         self.size = size;
     }
+
+    pub fn compute_position(
+        &mut self,
+        parent_point: LayoutPoint,
+        previous_sibling_kind: LayoutObjectKind,
+        previous_sibling_point: Option<LayoutPoint>,
+        previous_sibling_size: Option<LayoutSize>,
+    ) {
+        let mut point = LayoutPoint::new(0, 0);
+
+        match (self.kind(), previous_sibling_kind) {
+            // もしブロック要素が兄弟ノードの場合、Y軸方向に進む
+            (LayoutObjectKind::Block, _) | (_, LayoutObjectKind::Block) => {
+                if let (Some(size), Some(pos)) = (previous_sibling_size, previous_sibling_point) {
+                    point.set_y(pos.y() + size.height());
+                } else {
+                    point.set_y(parent_point.y());
+                }
+                point.set_x(parent_point.x());
+            }
+            // もしインライン要素が並ぶ場合、X軸方向に進む
+            (LayoutObjectKind::Inline, LayoutObjectKind::Inline) => {
+                if let (Some(size), Some(pos)) = (previous_sibling_size, previous_sibling_point) {
+                    point.set_x(pos.x() + size.width());
+                    point.set_y(pos.y());
+                } else {
+                    point.set_x(parent_point.x());
+                    point.set_y(parent_point.y());
+                }
+            }
+            _ => {
+                point.set_x(parent_point.x());
+                point.set_y(parent_point.y());
+            }
+        }
+
+        self.point = point;
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
