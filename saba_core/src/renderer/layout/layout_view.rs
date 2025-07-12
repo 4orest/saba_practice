@@ -242,4 +242,41 @@ mod tests {
                 .node_kind()
         );
     }
+
+    #[test]
+    fn test_text() {
+        let html = "<html><head></head><body>text</body></html>".to_string();
+        let layout_view = create_layout_view(html);
+
+        let root = layout_view.root();
+        assert!(root.is_some());
+        assert_eq!(
+            LayoutObjectKind::Block,
+            root.clone().expect("root should exist").borrow().kind()
+        );
+        assert_eq!(
+            NodeKind::Element(Element::new("body", Vec::new())),
+            root.clone()
+                .expect("root should exist")
+                .borrow()
+                .node_kind()
+        );
+
+        let text = root.expect("root should exist").borrow().first_child();
+        assert!(text.is_some());
+        assert_eq!(
+            LayoutObjectKind::Text,
+            text.clone()
+                .expect("text node should exist")
+                .borrow()
+                .kind()
+        );
+        assert_eq!(
+            NodeKind::Text("text".to_string()),
+            text.clone()
+                .expect("text node should exist")
+                .borrow()
+                .node_kind()
+        );
+    }
 }
