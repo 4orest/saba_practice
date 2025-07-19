@@ -328,7 +328,7 @@ impl LayoutObject {
                     return vec![DisplayItem::Rect {
                         style: self.style(),
                         layout_point: self.point(),
-                        layout_size: self.layout_size(),
+                        layout_size: self.size(),
                     }];
                 }
             }
