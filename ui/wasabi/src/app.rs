@@ -13,6 +13,7 @@ use noli::window::Window;
 use saba_core::browser::Browser;
 use saba_core::constants::*;
 use saba_core::error::Error;
+use saba_core::http::HttpResponse;
 
 #[derive(Debug)]
 pub struct WasabiUI {
@@ -154,7 +155,10 @@ impl WasabiUI {
         Ok(())
     }
 
-    fn handle_key_input(&mut self) -> Result<(), Error> {
+    fn handle_key_input(
+        &mut self,
+        handle_url: fn(String) -> Result<HttpResponse, Error>,
+    ) -> Result<(), Error> {
         match self.input_mode {
             InputMode::Normal => {
                 // InputModeがNormalのとき、キー入力を無視する
@@ -162,7 +166,13 @@ impl WasabiUI {
             }
             InputMode::Editing => {
                 if let Some(c) = Api::read_key() {
-                    if c == 0x7F as char || c == 0x08 as char {
+                    if c == 0x0A as char {
+                        // Enterキーが押されたので、ナビゲーションを開始する
+                        self.start_navigation(handle_url, self.input_url_clone())?;
+
+                        self.input_url = String::new();
+                        self.input_mode = InputMode::Normal;
+                    } else if c == 0x7F as char || c == 0x08 as char {
                         // デリートキーまたはバックスペースキーが押されたので、
                         // 最後の文字を削除する
                         self.input_url.pop();
@@ -244,6 +254,26 @@ impl WasabiUI {
             )
             .expect("failed to create a rect for the address bar"),
         );
+
+        Ok(())
+    }
+
+    fn start_navigation(
+        &mut self,
+        handle_url: fn(String) -> Result<HttpResponse, Error>,
+        destination: String,
+    ) -> Result<(), Error> {
+        self.clear_content_area()?;
+
+        match handle_url(destination) {
+            Ok(response) => {
+                let page = self.browser.borrow().current_page();
+                page.borrow_mut().receive_response(response);
+            }
+            Err(e) => {
+                return Err(e);
+            }
+        }
 
         Ok(())
     }
