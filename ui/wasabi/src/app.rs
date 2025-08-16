@@ -97,18 +97,24 @@ impl WasabiUI {
         Ok(())
     }
 
-    pub fn start(&mut self) -> Result<(), Error> {
+    pub fn start(
+        &mut self,
+        handle_url: fn(String) -> Result<HttpResponse, Error>,
+    ) -> Result<(), Error> {
         self.setup()?;
 
-        self.run_app()?;
+        self.run_app(handle_url)?;
 
         Ok(())
     }
 
-    fn run_app(&mut self) -> Result<(), Error> {
+    fn run_app(
+        &mut self,
+        handle_url: fn(String) -> Result<HttpResponse, Error>,
+    ) -> Result<(), Error> {
         loop {
             self.handle_mouse_input()?;
-            self.handle_key_input()?;
+            self.handle_key_input(handle_url)?;
         }
     }
 
@@ -168,7 +174,7 @@ impl WasabiUI {
                 if let Some(c) = Api::read_key() {
                     if c == 0x0A as char {
                         // Enterキーが押されたので、ナビゲーションを開始する
-                        self.start_navigation(handle_url, self.input_url_clone())?;
+                        self.start_navigation(handle_url, self.input_url.clone())?;
 
                         self.input_url = String::new();
                         self.input_mode = InputMode::Normal;
