@@ -99,7 +99,7 @@ impl Page {
         };
 
         if let Some(n) = view.find_node_by_position(position) {
-            if Some(parent) = n.borrow().parent().upgrade() {
+            if let Some(parent) = n.borrow().parent().upgrade() {
                 if let NodeKind::Element(e) = parent.borrow().node_kind() {
                     if e.kind() == ElementKind::A {
                         return e.get_attribute("href");
