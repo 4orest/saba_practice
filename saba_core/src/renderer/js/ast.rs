@@ -80,7 +80,7 @@ impl JsParser {
         let mut body = Vec::new();
 
         loop {
-            let node = self.source_element;
+            let node = self.source_element();
 
             match node {
                 Some(n) => body.push(n),
@@ -98,7 +98,7 @@ impl JsParser {
             None => return None,
         };
 
-        self.statement();
+        self.statement()
     }
 
     fn statement(&mut self) -> Option<Rc<Node>> {
@@ -160,6 +160,7 @@ impl JsParser {
     }
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Program {
     body: Vec<Rc<Node>>,
 }
