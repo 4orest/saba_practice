@@ -18,7 +18,7 @@ impl JsRuntime {
 
     pub fn execute(&mut self, program: &Program) {
         for node in program.body() {
-            self.eval(&Some(node.clone()))
+            self.eval(&Some(node.clone()));
         }
     }
 
@@ -93,5 +93,65 @@ impl Sub<RuntimeValue> for RuntimeValue {
     fn sub(self, rhs: RuntimeValue) -> RuntimeValue {
         let (RuntimeValue::Number(left_num), RuntimeValue::Number(right_num)) = (&self, &rhs);
         return RuntimeValue::Number(left_num - right_num);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use alloc::string::ToString;
+
+    use super::*;
+    use crate::renderer::js::ast::JsParser;
+    use crate::renderer::js::token::JsLexer;
+
+    #[test]
+    fn test_num() {
+        let input = "42".to_string();
+        let lexer = JsLexer::new(input);
+        let mut parser = JsParser::new(lexer);
+        let ast = parser.parse_ast();
+        let mut runtime = JsRuntime::new();
+        let expected = [Some(RuntimeValue::Number(42))];
+        let mut i = 0;
+
+        for node in ast.body() {
+            let result = runtime.eval(&Some(node.clone()));
+            assert_eq!(expected[i], result);
+            i += 1;
+        }
+    }
+
+    #[test]
+    fn test_add_nums() {
+        let input = "1 + 2".to_string();
+        let lexer = JsLexer::new(input);
+        let mut parser = JsParser::new(lexer);
+        let ast = parser.parse_ast();
+        let mut runtime = JsRuntime::new();
+        let expected = [Some(RuntimeValue::Number(3))];
+        let mut i = 0;
+
+        for node in ast.body() {
+            let result = runtime.eval(&Some(node.clone()));
+            assert_eq!(expected[i], result);
+            i += 1;
+        }
+    }
+
+    #[test]
+    fn test_sub_nums() {
+        let input = "2 - 1".to_string();
+        let lexer = JsLexer::new(input);
+        let mut parser = JsParser::new(lexer);
+        let ast = parser.parse_ast();
+        let mut runtime = JsRuntime::new();
+        let expected = [Some(RuntimeValue::Number(1))];
+        let mut i = 0;
+
+        for node in ast.body() {
+            let result = runtime.eval(&Some(node.clone()));
+            assert_eq!(expected[i], result);
+            i += 1;
+        }
     }
 }
