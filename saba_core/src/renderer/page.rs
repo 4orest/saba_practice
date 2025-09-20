@@ -10,7 +10,6 @@ use crate::renderer::dom::node::NodeKind;
 use crate::renderer::dom::node::Window;
 use crate::renderer::html::parser::HtmlParser;
 use crate::renderer::html::token::HtmlTokenizer;
-use crate::renderer::layout::layout_view;
 use crate::renderer::layout::layout_view::LayoutView;
 use alloc::rc::Rc;
 use alloc::rc::Weak;
