@@ -104,7 +104,7 @@ impl JsParser {
     fn statement(&mut self) -> Option<Rc<Node>> {
         let node = Node::new_expression_statement(self.assignment_expression());
 
-        if let Some(Token::Punctoator(c)) = self.t.peek() {
+        if let Some(Token::Punctuator(c)) = self.t.peek() {
             // ';' を消費する
             if c == &';' {
                 assert!(self.t.next().is_some());
@@ -127,7 +127,7 @@ impl JsParser {
         };
 
         match t {
-            Token::Punctoator(c) => match c {
+            Token::Punctuator(c) => match c {
                 '+' | '-' => {
                     // '+' または '-' の記号を消費する
                     assert!(self.t.next().is_some());

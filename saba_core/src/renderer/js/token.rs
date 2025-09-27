@@ -127,7 +127,7 @@ impl Iterator for JsLexer {
 
         let token = match c {
             '+' | '-' | ';' | '=' | '(' | ')' | '{' | '}' | ',' | '.' => {
-                let t = Token::Punctoator(c);
+                let t = Token::Punctuator(c);
                 self.pos += 1;
                 t
             }
@@ -144,7 +144,7 @@ impl Iterator for JsLexer {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Token {
     /// https://262.ecma-international.org/#sec-punctuators
-    Punctoator(char),
+    Punctuator(char),
     /// https://262.ecma-international.org/#sec-litarals-numeric-literals
     Number(u64),
     /// https://262.ecma-international.org/#sec-identifier-names
@@ -185,7 +185,7 @@ mod tests {
     fn test_add_nums() {
         let input = "1 + 2".to_string();
         let mut lexer = JsLexer::new(input).peekable();
-        let expected = [Token::Number(1), Token::Punctoator('+'), Token::Number(2)].to_vec();
+        let expected = [Token::Number(1), Token::Punctuator('+'), Token::Number(2)].to_vec();
         let mut i = 0;
         while lexer.peek().is_some() {
             assert_eq!(Some(expected[i].clone()), lexer.next());
