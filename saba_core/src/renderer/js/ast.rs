@@ -160,12 +160,23 @@ impl JsParser {
     }
 
     fn source_element(&mut self) -> Option<Rc<Node>> {
-        match self.t.peek() {
+        let t = match self.t.peek() {
             Some(t) => t,
             None => return None,
         };
 
-        self.statement()
+        match t {
+            Token::Keyword(keyword) => {
+                if keyword == "function" {
+                    // "function" キーワードを消費する
+                    assert!(self.t.next().is_some());
+                    self.function_declaration()
+                } else {
+                    self.statement()
+                }
+            }
+            _ => self.statement(),
+        }
     }
 
     fn statement(&mut self) -> Option<Rc<Node>> {
@@ -181,6 +192,11 @@ impl JsParser {
                     assert!(self.t.next().is_some());
 
                     self.variable_declaration()
+                } else if keyword == "return" {
+                    // "return"の予約語を消費する
+                    assert!(self.t.next().is_some());
+
+                    Node::new_return_statement(self.assignment_expression())
                 } else {
                     None
                 }
@@ -238,11 +254,73 @@ impl JsParser {
     }
 
     fn left_hand_side_expression(&mut self) -> Option<Rc<Node>> {
-        self.member_expression()
+        let expr = self.member_expression();
+
+        let t = match self.t.peek() {
+            Some(token) => token,
+            None => return expr,
+        };
+
+        match t {
+            Token::Punctuator(c) => {
+                if c == &'(' {
+                    // '('を消費する
+                    assert!(self.t.next().is_some());
+                    // 関数呼び出しのため、CallExpressionノードを返す
+                    return Node::new_call_expression(expr, self.arguments());
+                }
+
+                expr
+            }
+            _ => expr,
+        }
+    }
+
+    fn arguments(&mut self) -> Vec<Option<Rc<Node>>> {
+        let mut arguments = Vec::new();
+
+        loop {
+            // )に到達するまで、解釈した値をargumentsベクタに追加する
+            match self.t.peek() {
+                Some(t) => match t {
+                    Token::Punctuator(c) => {
+                        if c == &')' {
+                            // ')'を消費する
+                            assert!(self.t.next().is_some());
+                            return arguments;
+                        }
+                        if c == &',' {
+                            // ','を消費する
+                            assert!(self.t.next().is_some());
+                        }
+                    }
+                    _ => arguments.push(self.assignment_expression()),
+                },
+                None => return arguments,
+            }
+        }
     }
 
     fn member_expression(&mut self) -> Option<Rc<Node>> {
-        self.primary_expression()
+        let expr = self.primary_expression();
+
+        let t = match self.t.peek() {
+            Some(token) => token,
+            None => return expr,
+        };
+
+        match t {
+            Token::Punctuator(c) => {
+                if c == &'.' {
+                    // '.'を消費する
+                    assert!(self.t.next().is_some());
+                    return Node::new_member_expression(expr, self.identifier());
+                }
+
+                expr
+            }
+            _ => expr,
+        }
     }
 
     fn primary_expression(&mut self) -> Option<Rc<Node>> {
@@ -294,6 +372,79 @@ impl JsParser {
                 _ => None,
             },
             _ => None,
+        }
+    }
+
+    fn function_declaration(&mut self) -> Option<Rc<Node>> {
+        let id = self.identifier();
+        let params = self.parameter_list();
+        Node::new_function_declaration(id, params, self.function_body())
+    }
+
+    fn parameter_list(&mut self) -> Vec<Option<Rc<Node>>> {
+        let mut params = Vec::new();
+
+        // '('を消費する。もし次のトークンが'('でない場合、エラーになる
+        match self.t.next() {
+            Some(t) => match t {
+                Token::Punctuator(c) => assert!(c == '('),
+                _ => unimplemented!("function should have '(' but got {:?}", t),
+            },
+            None => unimplemented!("function should have '(' but got None"),
+        }
+
+        loop {
+            // ')' に到達するまで、paramsに仮引数となる変数を追加する
+            match self.t.peek() {
+                Some(t) => match t {
+                    Token::Punctuator(c) => {
+                        if c == &')' {
+                            // ')'を消費する
+                            assert!(self.t.next().is_some());
+                            return params;
+                        }
+                        if c == &',' {
+                            // ','を消費する
+                            assert!(self.t.next().is_some());
+                        }
+                    }
+                    _ => {
+                        params.push(self.identifier());
+                    }
+                },
+                None => return params,
+            }
+        }
+    }
+
+    fn function_body(&mut self) -> Option<Rc<Node>> {
+        // '{'を消費する
+        match self.t.next() {
+            Some(t) => match t {
+                Token::Punctuator(c) => assert!(c == '{'),
+                _ => unimplemented!("function should have open curly blacket but got {:?}", t),
+            },
+            None => unimplemented!("function should have open curly blacket but got None"),
+        }
+
+        let mut body = Vec::new();
+        loop {
+            // '}'に到達するまで、関数内のコードとして解釈する
+            match self.t.peek() {
+                Some(t) => match t {
+                    Token::Punctuator(c) => {
+                        if c == &'}' {
+                            // '}'を消費し、BlockStatementノードを返す
+                            assert!(self.t.next().is_some());
+                            return Node::new_block_statement(body);
+                        }
+                    }
+                    _ => {}
+                },
+                None => {}
+            }
+
+            body.push(self.source_element());
         }
     }
 }
