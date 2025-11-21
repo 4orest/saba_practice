@@ -64,7 +64,7 @@ pub fn get_element_by_id(
                 }
             }
             let result1 = get_element_by_id(n.borrow().first_child(), id_name);
-            let result2 = get_element_by_id(n.borrow().second_child(), id_name);
+            let result2 = get_element_by_id(n.borrow().next_sibling(), id_name);
             if result1.is_none() {
                 return result2;
             }
