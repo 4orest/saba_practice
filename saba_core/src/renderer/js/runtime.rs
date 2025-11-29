@@ -91,6 +91,27 @@ impl JsRuntime {
                         return None;
                     }
                 }
+
+                if let Some(RuntimeValue::HtmlElement { object, property }) =
+                    self.eval(left, env.clone())
+                {
+                    let right_value = match self.eval(right, env.clone()) {
+                        Some(value) => value,
+                        None => return None,
+                    };
+
+                    if let Some(p) = property {
+                        // target.textContext = "foobar"; のようにノードのテキストを変更する
+                        if p == "textContext" {
+                            object
+                                .borrow_mut()
+                                .set_first_child(Some(Rc::new(RefCell::new(DomNode::new(
+                                    DomNodeKind::Text(right_value.to_string()),
+                                )))));
+                        }
+                    }
+                }
+
                 None
             }
             Node::MemberExpression { object, property } => {
@@ -103,6 +124,17 @@ impl JsRuntime {
                     // プロパティが存在しないため、`object_value`をここで返す
                     None => return Some(object_value),
                 };
+
+                // もしオブジェクトがDOMノードの場合、HtmlElementのpropertyを更新する
+                if let RuntimeValue::HtmlElement { object, property } = object_value {
+                    assert!(property.is_none());
+                    // HtmlElement の property に property_value の文字列を
+                    // セットする
+                    return Some(RuntimeValue::HtmlElement {
+                        object,
+                        property: Some(property_value.to_string()),
+                    });
+                }
 
                 // document.getElementByIdは、"document.getElementById"
                 // という一つの文字列として扱う。
